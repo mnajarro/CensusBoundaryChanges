@@ -8,6 +8,9 @@
         <meta name="apple-mobile-web-app-capable" content="yes">
         <link rel="stylesheet" href="css/leaflet.css">
         <link rel="stylesheet" href="css/qgis2web.css"><link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <script src="https://unpkg.com/esri-leaflet@2.3.2/dist/esri-leaflet.js"
+        integrity="sha512-6LVib9wGnqVKIClCduEwsCub7iauLXpwrd5njR2J507m3A2a4HXJDLMiSZzjcksag3UluIfuW1KzuWVI5n/cuQ=="
+        crossorigin=""></script>
         <style>
         #map {
             width: 1291px;
@@ -31,6 +34,7 @@
         <script src="data/UScounty1218chg_0.js"></script>
         <script src="data/UScousub1218chg_1.js"></script>
         <script>
+            //http://mnajarro.github.io/CensusBoundaryChanges
         var highlightLayer;
         function highlightFeature(e) {
             highlightLayer = e.target;
@@ -49,6 +53,7 @@
         var map = L.map('map', {
             zoomControl:true, maxZoom:28, minZoom:1
         }).fitBounds([[17.296130981613665,-136.35761753533748],[65.65979810062063,-45.216145435337495]]);
+        L.esri.basemapLayer('Gray').addTo(map);
         var hash = new L.Hash(map);
         map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
         var bounds_group = new L.featureGroup([]);
