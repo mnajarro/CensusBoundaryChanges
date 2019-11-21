@@ -8,9 +8,6 @@
         <meta name="apple-mobile-web-app-capable" content="yes">
         <link rel="stylesheet" href="css/leaflet.css">
         <link rel="stylesheet" href="css/qgis2web.css"><link rel="stylesheet" href="css/fontawesome-all.min.css">
-        <script src="https://unpkg.com/esri-leaflet@2.3.2/dist/esri-leaflet.js"
-        integrity="sha512-6LVib9wGnqVKIClCduEwsCub7iauLXpwrd5njR2J507m3A2a4HXJDLMiSZzjcksag3UluIfuW1KzuWVI5n/cuQ=="
-        crossorigin=""></script>
         <style>
         #map {
             width: 1291px;
@@ -33,6 +30,7 @@
         <script src="js/labels.js"></script>
         <script src="data/UScounty1218chg_0.js"></script>
         <script src="data/UScousub1218chg_1.js"></script>
+        <script src="js/esri-leaflet.js"></script>
         <script>
             //http://mnajarro.github.io/CensusBoundaryChanges
         var highlightLayer;
@@ -149,14 +147,14 @@
             return {
                 pane: 'pane_UScounty1218chg_0',
                 opacity: 1,
-                color: 'rgba(35,35,35,1.0)',
+                color: '#0505fa',
                 dashArray: '',
                 lineCap: 'butt',
                 lineJoin: 'miter',
-                weight: 1.0, 
+                weight: 1.5, 
                 fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(225,89,137,1.0)',
+                fillOpacity: 0.1,
+                fillColor:'#0505fa',
                 interactive: true,
             }
         }
@@ -275,14 +273,13 @@
             return {
                 pane: 'pane_UScousub1218chg_1',
                 opacity: 1,
-                color: 'rgba(35,35,35,1.0)',
+                color: '#fa0505',
                 dashArray: '',
                 lineCap: 'butt',
                 lineJoin: 'miter',
                 weight: 1.0, 
                 fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(229,182,54,1.0)',
+                fillOpacity: 0,
                 interactive: true,
             }
         }
@@ -301,6 +298,16 @@
         bounds_group.addLayer(layer_UScousub1218chg_1);
         map.addLayer(layer_UScousub1218chg_1);
         setBounds();
+        // L.esri.featureLayer({
+        //     url: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer/15'
+        // }).addTo(map);
+        // L.esri.featureLayer({
+        //      url: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/36'
+        //  }).addTo(map);
+        //  L.esri.featureLayer({
+        //      url: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/37'
+        //  }).addTo(map);
+         
         </script>
     </body>
 </html>
