@@ -10,15 +10,38 @@
         <link rel="stylesheet" href="css/qgis2web.css"><link rel="stylesheet" href="css/fontawesome-all.min.css">
         <style>
         #map {
-            width: 1291px;
-            height: 686px;
+            width: 100%;
+            height: 700px;
         }
+        .legend {
+            position: absolute;
+            bottom: 10px;
+            left: 30px;
+            z-index: 2000;
+            height: 100px;
+            width: 150px
+        }
+        .table{
+            position: absolute;
+            bottom: 10px;
+            right: 30px;
+            z-index: 2000;
+            height: 100px;
+            width: 300px;
+        }
+        .legimg{
+            width:100%;
+            height: 100%
+        }
+
         </style>
         <title></title>
     </head>
     <body>
         <div id="map">
         </div>
+        <span class="legend"><img class="legimg" src="images/legend.PNG"></span>
+        <span class="table"><img class="legimg" src="images/census_tables.PNG"></span>
         <script src="js/qgis2web_expressions.js"></script>
         <script src="js/leaflet.js"></script>
         <script src="js/leaflet.rotatedMarker.js"></script>
@@ -147,14 +170,14 @@
             return {
                 pane: 'pane_UScounty1218chg_0',
                 opacity: 1,
-                color: '#0505fa',
+                color: '#fa0505',
                 dashArray: '',
                 lineCap: 'butt',
                 lineJoin: 'miter',
-                weight: 1.5, 
+                weight: 2, 
                 fill: true,
                 fillOpacity: 0.1,
-                fillColor:'#0505fa',
+                fillColor:'#fa0505',
                 interactive: true,
             }
         }
@@ -298,16 +321,40 @@
         bounds_group.addLayer(layer_UScousub1218chg_1);
         map.addLayer(layer_UScousub1218chg_1);
         setBounds();
-        // L.esri.featureLayer({
-        //     url: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer/15'
-        // }).addTo(map);
-        // L.esri.featureLayer({
-        //      url: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/36'
-        //  }).addTo(map);
-        //  L.esri.featureLayer({
-        //      url: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/37'
-        //  }).addTo(map);
-         
+        function boundaryStyle() {
+            return {
+                opacity: 1,
+                color: 'black',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 0.1, 
+                fill: true,
+                fillOpacity: 0,
+                interactive: true,
+            }
+        }
+        var countySub = L.esri.featureLayer({
+            url: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer/15',
+            style: boundaryStyle()
+        });
+        var state = L.esri.featureLayer({
+             url: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/36',
+             style: boundaryStyle()
+         }).addTo(map);
+        var county = L.esri.featureLayer({
+             url: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/37',
+             style: boundaryStyle()
+         });
+        //var layersGroup = L.layerGroup([layer_UScousub1218chg_1, layer_UScounty1218chg_0, state, county, countySub]);
+        var overlayMaps = {
+            "County SubDivision Change": layer_UScousub1218chg_1,
+            "County Change": layer_UScounty1218chg_0,
+            "State Boundaries": state,
+            "County Boundaries": county,
+            "County SubDivision": countySub
+        };
+        L.control.layers("",overlayMaps).addTo(map);
         </script>
     </body>
 </html>
