@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/qgis2web.css"><link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <style>
+        body {
+        padding: 0;
+        margin: 0;
+        }
+        html, body, #map {
+            height: 100%;
+            width: 100%;
+        }
+        /* #map {
+            width: 100%;
+            height: 700px;
+        } */
+        /* .legend {
+            position: absolute;
+            bottom: 10px;
+            left: 30px;
+            z-index: 2000;
+            height: 100px;
+            width: 150px
+        } */
+        .panel{
+            position: absolute;
+            top: 15%;
+            left: 13px;
+            z-index: 2000;
+            height: 30%;
+            width: 21%;
+            background-color:rgba(255,255, 255, 0.9);
+            border-radius: 5px;
+        }
+        .download {
+            position: absolute;
+            top: 50%;
+            left: 13px;
+            z-index: 2001;
+        }
+        .legimg{
+            width:100%;
+            height: 100%
+        }
+        .legend {
+            line-height: 18px;
+            color: #555;
+        }
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.7;
+        }
+        .leaflet-container{
+            padding-right: 0 !important
+        }
+        .subPanel {
+            padding: 5px 5px;
+        }
+        </style>
+        <title></title>
+    </head>
+    <body>
+        <div id="map">
+        </div>
+        <!-- <span class="legend"><img class="legimg" src="images/legend.PNG"></span> -->
+        <!-- <span class="table"><img class="legimg" src="images/census_tables.PNG"></span> -->
+        <div class = "panel">
+            <div class="subPanel">
+                <br>
+                <label for="yearSelector"> ACS Year: </label>
+                <select id="yearSelector" onchange="changer()">
+                    <option value="All" selected>All Years</option>
+                    <option value="1">ACS 2012</option>
+                    <option value="3">ACS 2014</option>
+                    <option value="4">ACS 2016</option>
+                </select>
+                <br><br>
+                <label for="statusSelector"> Status: </label>
+                <select id="statusSelector" onchange="changer()">
+                    <option value="All" selected>Designaged and Prop Withd</option>
+                    <option value="Designated">Designated</option>
+                    <option value="Proposed For Withdrawal">Proposed For Withdrawal</option>
+                </select>
+                <br><br>
+                <label for="disciplineSelector"> Discipline: </label>
+                <select id="disciplineSelector" onchange="changer()">
+                    <option value="All" selected>All Disciplines</option>
+                    <option value="Dental Health">Dental Health</option>
+                    <option value="Mental Health">Mental Health</option>
+                    <option value="Primary Care">Primary Care</option>
+                </select>
+                <br><br>
+                <label for="tableDownload"> Download Table Version: </label>
+                <a id="tableDownload" href='data/Geocomponents.xlsx' target="_blank" download><button class="btn"><i class="fa fa-download"></i> .xlsx</button></a>
+            </div>
+        </div>
+        
+
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="data/countyGeocomponents.js"></script>
+        ,<script src="data/mcdGeocomponents.js"></script>
+        <script src="data/rsaMCD.js"></script>
+        <script src="data/rsaCounties.js"></script>
+        <script src="data/countyTiger2018.js"></script>
+        <script src="data/mcdTiger2018.js"></script>
+        <script src="js/esri-leaflet.js"></script>
+        <script>
+            //http://mnajarro.github.io/CensusBoundaryChanges
+        var gcYear = 'All';
+        var gcStatus = 'All'
+        var gcDiscipline = 'All';
+        var highlightLayer;
+        function highlightFeature(e) {
+            highlightLayer = e.target;
+
+            if (e.target.feature.geometry.type === 'LineString') {
+              highlightLayer.setStyle({
+                color: '#ffff00',
+              });
+            } else {
+              highlightLayer.setStyle({
+                weight: 5
+              });
+            }
+        }
+        var map = L.map('map', {
+            zoomControl:true, maxZoom:28, minZoom:1
+        }).fitBounds([[17.296130981613665,-136.35761753533748],[65.65979810062063,-45.216145435337495]]);
+        L.esri.basemapLayer('Gray').addTo(map);
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+        }
+        function rcaStyle(paneType){
+            return {
+                pane: paneType,
+                opacity: 1,
+                color: '#4daf4a',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2, 
+                fill: true,
+                fillOpacity: 0,
+                interactive: true,
+            }
+        }
+        function getAttributes(feature){
+            var featureHead = Object.keys(feature.properties)
+            var content = '';
+            featureHead.forEach(attName => {
+                content += '<tr>\
+                    <th scope="row">'+attName+'</th>\
+                    <td>' + (feature.properties[attName] !== null ? Autolinker.link(feature.properties[attName].toLocaleString()) : '') + '</td>\
+                </tr>'
+            });
+            return content
+        }
+        function rcaFunc(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (i in e.target._eventParents) {
+                        e.target._eventParents[i].resetStyle(e.target);
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var attributeTrs = getAttributes(feature)
+            var popupContent = '<table>'+ attributeTrs + '</table>';
+            layer.bindPopup(popupContent, {maxHeight: 402});
+        }
+        map.createPane('rsaMCDPane');
+        map.getPane('rsaMCDPane').style.zIndex = 402;
+        map.getPane('rsaMCDPane').style['mix-blend-mode'] = 'normal';
+        var rsaMCD = new L.geoJson(rsaMCDs, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'rsaMCDs',
+            layerName: 'rsaMCD',
+            pane: 'rsaMCDPane',
+            onEachFeature: rcaFunc,
+            style: rcaStyle('rsaMCDPane'),
+        });
+
+        //bounds_group.addLayer(rsaMCD);
+        //map.addLayer(rsaMCD);
+        // County RCAs
+        map.createPane('rsaCountiesPane');
+        map.getPane('rsaCountiesPane').style.zIndex = 403;
+        map.getPane('rsaCountiesPane').style['mix-blend-mode'] = 'normal';
+        var rsaCounties = new L.geoJson(rsaCounties, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'rsaCounties',
+            layerName: 'rsaCounties',
+            pane: 'rsaCountiesPane',
+            onEachFeature: rcaFunc,
+            style: rcaStyle('rsaCountiesPane'),
+        });
+        //bounds_group.addLayer(rsaMCD);
+        //map.addLayer(rsaCounties);
+// TIGER FILE SUBSET
+        function tigerStyle(paneType){
+            return {
+                pane: paneType,
+                opacity: 1,
+                color: 'black',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1, 
+                fill: true,
+                fillOpacity: 0.5,
+                fillColor:'#377eb8',
+                interactive: true,
+            }
+        }
+         // Counties
+        map.createPane('tigerCountiesPane');
+        map.getPane('tigerCountiesPane').style.zIndex = 400;
+        map.getPane('tigerCountiesPane').style['mix-blend-mode'] = 'normal';
+        var tigerCounties = new L.geoJson(countyTiger2018, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'countyTiger2018',
+            layerName: 'tigerCounties',
+            pane: 'tigerCountiesPane',
+            onEachFeature: rcaFunc,
+            style: tigerStyle('tigerCountiesPane'),
+        });
+        //bounds_group.addLayer(rsaMCD);
+        map.addLayer(tigerCounties);
+        /// MCDs
+        map.createPane('tigerMcdPane');
+        map.getPane('tigerMcdPane').style.zIndex = 400;
+        map.getPane('tigerMcdPane').style['mix-blend-mode'] = 'normal';
+        var mcdCounties = new L.geoJson(mcdTiger2018, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'mcdTiger2018',
+            layerName: 'mcdCounties',
+            pane: 'tigerMcdPane',
+            onEachFeature: rcaFunc,
+            style: tigerStyle('tigerMcdPane'),
+        });
+        //bounds_group.addLayer(rsaMCD);
+        map.addLayer(mcdCounties);
+// GEOCOMPONENT SUBSET
+    function filterFunc(geoJsonFeature) {
+        var query = (geoJsonFeature.properties['GeoDataSou']==gcYear | gcYear == 'All')&& 
+                    (geoJsonFeature.properties['StatusDesc']==gcStatus | gcStatus == 'All') &&
+                    (geoJsonFeature.properties['Discipli_1']==gcDiscipline | gcDiscipline == 'All');
+        if (query) {
+            return true;
+        } else { 
+            console.log("query not working or combination of filters doesn't exist")
+            return false
+        }
+    }
+
+    function relabel (fieldHeader){
+        return fieldHeader == 'GeoUnitNam'  ? 'Name' :
+                fieldHeader == 'GeoDataSou' ? 'Year' :
+                fieldHeader == 'GeoUnitTyp' ? 'Type' :
+                fieldHeader == 'StatusDesc' ? 'Status' :
+                fieldHeader == 'Discipli_1' ? 'Discipline' : 
+                fieldHeader == 'GeoPublicI' ? "Public GeoID":
+                fieldHeader == 'NAME' ? '2018 Name':
+                fieldHeader == 'GEOID' ? '2018 Public GeoID': 
+                    'none'
+                    
+    }        
+    function getYear(year) {
+        return year == '1'  ? 'ACS 2012' :
+                year == '2' ? 'ACS 2013' :
+                year == '3' ? 'ACS 2014' :
+                year == '4' ? 'ACS 2016' :
+                    'ACS 2011'
+    }
+    function gcFunc(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (i in e.target._eventParents) {
+                        e.target._eventParents[i].resetStyle(e.target);
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+
+            var featureHead = Object.keys(feature.properties)
+            //console.log(featureHead)
+            var content = '';
+            featureHead.forEach(attName => {
+                var fieldNames = ['GeoUnitNam', 'GeoDataSou', 'GeoUnitTyp', 'StatusDesc', 'Discipli_1','GeoPublicI', 'NAME','GEOID']
+                if (fieldNames.includes(attName)){
+                    if(attName == 'GeoDataSou'){
+                        yearClass=getYear(feature.properties[attName])
+                        content += '<tr>\
+                            <th scope="row">'+relabel(attName)+'</th>\
+                            <td>' + (feature.properties[attName] !== null ? Autolinker.link(yearClass.toLocaleString()) : '') + '</td>\
+                        </tr>'
+                    } else{
+                        content += '<tr>\
+                            <th scope="row">'+relabel(attName)+'</th>\
+                            <td>' + (feature.properties[attName] !== null ? Autolinker.link(feature.properties[attName].toLocaleString()) : '') + '</td>\
+                        </tr>'
+                    }
+                    
+                }
+            });
+            //var attributeTrs = getAttributes(feature)
+            var popupContent = '<table>'+ content + '</table>';
+            layer.bindPopup(popupContent, {maxHeight: 402});
+        }
+        function geoComponentStyle(paneType){
+            return {
+                pane: paneType,
+                opacity: 1,
+                color: '#e41a1c',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2, 
+                fill: true,
+                fillOpacity: 0,
+                interactive: true,
+            }
+        }
+         // Counties
+        map.createPane('countyGCPane');
+        map.getPane('countyGCPane').style.zIndex = 405;
+        map.getPane('countyGCPane').style['mix-blend-mode'] = 'normal';
+        var gcCounties = new L.geoJson(countyGeocomponents, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'countyGeocomponents',
+            layerName: 'gcCounties',
+            pane: 'countyGCPane',
+            onEachFeature: gcFunc,
+            filter: filterFunc,
+            style: geoComponentStyle('countyGCPane'),
+        });
+        //bounds_group.addLayer(rsaMCD);
+        map.addLayer(gcCounties);
+        /// MCDs
+        map.createPane('gcMcdPane');
+        map.getPane('gcMcdPane').style.zIndex = 405;
+        map.getPane('gcMcdPane').style['mix-blend-mode'] = 'normal';
+        var gcMCD = new L.geoJson(mcdGeocomponents, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'mcdGeocomponents',
+            layerName: 'gcMCD',
+            pane: 'gcMcdPane',
+            onEachFeature: gcFunc,
+            style: geoComponentStyle('gcMcdPane'),
+            filter: filterFunc,
+            attribution: 'mcdGeocomponents'
+        });
+        //bounds_group.addLayer(rsaMCD);
+        map.addLayer(gcMCD);        
+        //ESRI Layers
+        function boundaryStyle() {
+            return {
+                opacity: 1,
+                color: 'black',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 0.1, 
+                fill: true,
+                fillOpacity: 0,
+                interactive: true,
+            }
+        }
+        var countySub = L.esri.featureLayer({
+            url: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer/15',
+            style: boundaryStyle()
+        });
+        var state = L.esri.featureLayer({
+             url: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/36',
+             style: boundaryStyle()
+         })//.addTo(map);
+        var county = L.esri.featureLayer({
+             url: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/37',
+             style: boundaryStyle()
+         });
+        //var layersGroup = L.layerGroup([layer_UScousub1218chg_1, layer_UScounty1218chg_0, state, county, countySub]);
+        var overlayMaps = {
+            "County Geocomponents": gcCounties,
+            "MCD Geocomponents": gcMCD,
+            "2018 Tiger Counties": tigerCounties,
+            "2018 Tiger MCDs": mcdCounties,
+            "RSA County": rsaCounties,
+            "RSA MCD": rsaMCD,
+            "State Boundaries": state,
+            "County Boundaries": county,
+            "County SubDivision": countySub
+        };
+        L.control.layers("",overlayMaps,{collapsed:false}).addTo(map);
+
+        //LEGEND
+        function getColor(d) {
+            return d == 'State, Country or CountySubdivisions'  ? 'border: solid gray' :
+                d == '2018 Tiger Boundary' ? 'border: solid black; background: #377eb8' :
+                d == 'Geocomponents' ? 'border: solid #e41a1c' :
+                        '#FFEDA0';
+        }
+        var legend = L.control({position: 'bottomleft'});
+
+        legend.onAdd = function (map) {
+
+            var div = L.DomUtil.create('div', 'info legend'),
+                grades = ["Geocomponents", "2018 Tiger Boundary", "State, Country or CountySubdivisions"],
+                labels = ["Geocomponents", "2018 Tiger Boundary", "State, Country or CountySubdivisions"];
+
+            // loop through our density intervals and generate a label with a colored square for each interval
+            for (var i = 0; i < grades.length; i++) {
+                div.innerHTML +=
+                    '<br><i style=" ' + getColor(grades[i]) + '"></i> ' +
+                    grades[i] + '<br>';
+            }
+
+            return div;
+        };
+
+        legend.addTo(map);
+
+    // Filter Buttons
+    function reloadLayer() {
+            map.removeLayer(gcMCD)
+            gcMCD = ''
+            gcMCD= new L.geoJson(mcdGeocomponents, {
+                attribution: '',
+                interactive: true,
+                dataVar: 'mcdGeocomponents',
+                layerName: 'gcMCD',
+                pane: 'gcMcdPane',
+                onEachFeature: gcFunc,
+                style: geoComponentStyle('gcMcdPane'),
+                filter: filterFunc,
+                attribution: 'mcdGeocomponents'
+            }).addTo(map);
+
+            map.removeLayer(gcCounties)
+            gcCounties  = new L.geoJson(countyGeocomponents, {
+                attribution: '',
+                interactive: true,
+                dataVar: 'countyGeocomponents',
+                layerName: 'gcCounties',
+                pane: 'countyGCPane',
+                onEachFeature: gcFunc,
+                style: geoComponentStyle('countyGCPane'),
+                filter: filterFunc,
+                attribution: 'countyGeocomponents'
+            }).addTo(map);
+       
+    }
+
+    function changer() {
+        var yearSelector = document.getElementById("yearSelector").value;
+        gcStatus = document.getElementById("statusSelector").value;
+        gcDiscipline = document.getElementById("disciplineSelector").value;
+        gcYear = yearSelector
+        reloadLayer()
+    }
+    // function statusChanger() {
+    //     gcStatus = document.getElementById("statusSelector").value;
+    //     var attribute = [gcMCD.getAttribution(),gcCounties.getAttribution()] /// make sure to make it for both at the same time. 
+    //     reloadLayer(attribute)
+    //     attribute.forEach(att => {
+    //         reloadLayer(att)
+    //     });
+        
+    // }
+    // function disciplineChanger() {
+    //     gcDiscipline = document.getElementById("disciplineSelector").value;
+    //     var attribute = [gcMCD.getAttribution(),gcCounties.getAttribution()] /// make sure to make it for both at the same time. 
+    //     reloadLayer(attribute)
+    //     // attribute.forEach(att => {
+    //     //     reloadLayer(att)
+    //     // });
+        
+    // }
+
+    
+        </script>
+    </body>
+</html>
