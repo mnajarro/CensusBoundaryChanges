@@ -1,0 +1,37 @@
+# driver = ogr.GetDriverByName("ESRI Shapefile")
+# dataSource = driver.Open(directory+file12, 1)
+# layer12 = dataSource.GetLayer()
+#
+# dataSource2 = driver.Open(directory+file18, 1)
+# layer18 = dataSource2.GetLayer()
+# print(layer12)
+# #set spatial reference and transformation
+# sourceprj = layer12.GetSpatialRef()
+# targetprj = osr.SpatialReference()
+# targetprj.ImportFromEPSG(102003)
+#
+# transform = osr.CoordinateTransformation(sourceprj, targetprj)
+# print(transform)
+# #
+# to_fill = ogr.GetDriverByName("Esri Shapefile")
+# ds = to_fill.CreateDataSource(directory+"/projected.shp")
+# outlayer = ds.CreateLayer('', targetprj, ogr.wkbPolygon)
+# outlayer.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
+# #
+# # #apply transformation
+# i = 0
+#
+# for feature in layer12:
+#     transformed = feature.GetGeometryRef()
+#     transformed.Transform(transform)
+#
+#     geom = ogr.CreateGeometryFromWkb(transformed.ExportToWkb())
+#     defn = outlayer.GetLayerDefn()
+#     feat = ogr.Feature(defn)
+#     feat.SetField('id', i)
+#     feat.SetGeometry(geom)
+#     outlayer.CreateFeature(feat)
+#     i += 1
+#     feat = None
+#
+# ds = None

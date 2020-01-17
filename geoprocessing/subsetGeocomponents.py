@@ -1,12 +1,13 @@
-# This script takes in tiger files nd geocomponent files to output subsets of both based on tiger file intersections
+# This script takes in tiger files and geocomponent files to output subsets of both based on tiger file intersections
 # and adding fields to geocomponents. this script generate centroids based off of us county or subcounty boundaries then uses 
 # it to do a spatial join on geocomponents
 # Ultimate this preps the data for the geocomponents.html application. 
 
 import sys
-#sys.path.append("C:\\Program Files\\QGIS 3.8\\apps\\Python37\\Lib")
+
 from qgis.core import *
 import os
+sys.path.append('C:\\OSGeo4W64\\apps\\qgis\\python\\plugins')
 import processing
 # Get input files
 
